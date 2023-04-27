@@ -1,4 +1,3 @@
----
 name: Build
 on:
   push:
@@ -11,7 +10,7 @@ on:
       - reopened
 jobs:
   sonarcloud:
-    name: Jfrog github
+    name: Jfrog github integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,15 +20,53 @@ jobs:
         uses: actions/setup-node@v3.3.0
         with:
           node-version: "18"
-          cache: npm
+          cache: 'npm'
       - name: Install all required dependencies
-        run: npm install
+        run: yarn install
+#       - name: Lint
+#         run: npm run lint
       - name: Create  artifact dist folder
         run: |
-          mkdir dist1
+          mkdir dist
           sudo apt update
           sudo apt install tar gzip build-essential
-          cd  dist1
+          cd  dist
       - name: Code Build
         run: |
-          npm run build --prod
+          yarn run build
+          echo ${{ format('{{V {0} {1} {2}!}}', '0.', '0.', github.run_number) }}
+      - name: upload all aritifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ./dist
+#       - name: Setup JFrog CLI for integration
+#         uses: jfrog/setup-jfrog-cli@v3
+#         env:
+#           JF_URL: ${{ secrets.INSIGHT_CENTER_COMPONENTS_JFROG_URL }}
+#           JF_ACCESS_TOKEN: ${{ secrets.INSIGHT_CENTER_COMPONENTS_JFROG_TOKEN }}
+#       - name: validate connectivity with jfrog server
+#         run: |
+#           jf rt ping
+      - name: validate all input
+        run: |
+          pwd
+          ls 
+          cd dist
+      - name: download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+      - name: validate output
+        run: |
+          pwd
+          ls 
+#       - name: tar folder
+#         uses: nxtlvlsoftware/tar-ops-action@v1
+#         with:
+#           operation: compress
+#           files: dist
+#           outPath: ./dist.tgz
+#       - name: upload file to artifactory
+#         run: |
+#           jf rt upload  dist.tgz /insight-center-components-generic-local/build1/
